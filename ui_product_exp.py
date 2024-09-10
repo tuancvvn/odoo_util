@@ -2,7 +2,8 @@ import os
 import csv
 import xmlrpc.client
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
+
 
 # Hàm để xuất dữ liệu sản phẩm ra file CSV
 def export_products():
@@ -23,33 +24,33 @@ def export_products():
             products = models.execute_kw(db, uid, password, 'product.product', 'search_read', [[]],
                                          {'fields': ['name', 'list_price', 'categ_id'], 'limit': 10})
 
-            # Đường dẫn thư mục 'output'
-            output_dir = os.path.join(os.getcwd(), 'output')
+            # Hộp thoại để chọn vị trí lưu file
+            file_path = filedialog.asksaveasfilename(defaultextension=".csv",
+                                                     filetypes=[("CSV files", "*.csv")],
+                                                     title="Chọn vị trí lưu file")
 
-            # Kiểm tra và tạo thư mục 'output' nếu chưa tồn tại
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
+            if file_path:
+                # Tạo file CSV và ghi dữ liệu vào
+                with open(file_path, mode='w', newline='', encoding='utf-8-sig') as file:
+                    writer = csv.writer(file)
 
-            # Đường dẫn đầy đủ đến file CSV
-            csv_file = os.path.join(output_dir, "products.csv")
+                    # Ghi tiêu đề cột
+                    writer.writerow(['Product Name', 'Price', 'Category'])
 
-            # Tạo file CSV và ghi dữ liệu vào
-            with open(csv_file, mode='w', newline='', encoding='utf-8') as file:
-                writer = csv.writer(file)
+                    # Ghi dữ liệu sản phẩm
+                    for product in products:
+                        category_name = product['categ_id'][1] if product['categ_id'] else 'No Category'
+                        writer.writerow([product['name'], product['list_price'], category_name])
 
-                # Ghi tiêu đề cột
-                writer.writerow(['Product Name', 'Price', 'Category'])
+                messagebox.showinfo("Thành công", f"Dữ liệu sản phẩm đã được lưu vào {file_path}")
+            else:
+                messagebox.showwarning("Hủy bỏ", "Lưu file đã bị hủy.")
 
-                # Ghi dữ liệu sản phẩm
-                for product in products:
-                    category_name = product['categ_id'][1] if product['categ_id'] else 'No Category'
-                    writer.writerow([product['name'], product['list_price'], category_name])
-
-            messagebox.showinfo("Thành công", f"Dữ liệu sản phẩm đã được lưu vào {csv_file}")
         else:
             messagebox.showerror("Lỗi", "Không thể xác thực. Vui lòng kiểm tra thông tin đăng nhập.")
     except Exception as e:
         messagebox.showerror("Lỗi", str(e))
+
 
 # Tạo cửa sổ chính
 root = tk.Tk()

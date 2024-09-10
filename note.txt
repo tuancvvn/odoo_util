@@ -1,0 +1,3 @@
+Tạo file thực thi
+pip install pyinstaller
+pyinstaller --onefile --windowed ui_product_exp.py

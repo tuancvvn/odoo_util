@@ -1,2 +1,6 @@
 # pycharm ide project file
 .idea
+dist/
+output/
+*.spec
+build/
