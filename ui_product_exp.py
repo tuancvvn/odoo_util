@@ -21,7 +21,9 @@ def export_products():
 
             # Lấy dữ liệu sản phẩm
             products = models.execute_kw(db, uid, password, 'product.product', 'search_read', [[]],
-                                         {'fields': ['name', 'list_price', 'categ_id'], 'limit': 10})
+                                         {'fields': ['name', 'sale_ok', 'purchase_ok', 'list_price', 'standard_price',
+                                                     'default_code', 'detailed_type', 'invoice_policy', 'categ_id'],
+                                          'limit': 10})
 
             # Đường dẫn thư mục 'output'
             output_dir = os.path.join(os.getcwd(), 'output')
