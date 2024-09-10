@@ -23,8 +23,7 @@ def export_products():
             # Lấy dữ liệu sản phẩm
             products = models.execute_kw(db, uid, password, 'product.product', 'search_read', [[]],
                                          {'fields': ['name', 'sale_ok', 'purchase_ok', 'list_price', 'standard_price',
-                                                     'default_code', 'detailed_type', 'invoice_policy', 'categ_id'],
-                                          'limit': 10})
+                                                     'default_code', 'detailed_type', 'invoice_policy', 'categ_id']})
 
             # Hộp thoại để chọn vị trí lưu file
             file_path = filedialog.asksaveasfilename(defaultextension=".csv",
@@ -37,12 +36,15 @@ def export_products():
                     writer = csv.writer(file)
 
                     # Ghi tiêu đề cột
-                    writer.writerow(['Product Name', 'Price', 'Category'])
+                    writer.writerow(['Tên SP', 'Có thể bán', 'Có thể mua', 'Giá bán', 'Chi phí',
+                                     'Mã nội bộ', 'Loại sản phẩm', 'Chính sách xuất HĐ', 'Danh mục SP'])
 
                     # Ghi dữ liệu sản phẩm
                     for product in products:
                         category_name = product['categ_id'][1] if product['categ_id'] else 'No Category'
-                        writer.writerow([product['name'], product['list_price'], category_name])
+                        writer.writerow([product['name'], product['sale_ok'], product['purchase_ok'],
+                                         product['list_price'], product['standard_price'], product['default_code'],
+                                         product['detailed_type'], product['invoice_policy'], category_name])
 
                 messagebox.showinfo("Thành công", f"Dữ liệu sản phẩm đã được lưu vào {file_path}")
             else:
