@@ -21,20 +21,21 @@ def load_products():
             models = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object')
 
             # Lấy dữ liệu sản phẩm
-            products = models.execute_kw(db, uid, password, 'product.product', 'search_read', [[]],
-                                         {'fields': ['name', 'sale_ok', 'purchase_ok', 'list_price', 'standard_price',
-                                                     'default_code', 'detailed_type', 'invoice_policy', 'categ_id']})
+            partner = models.execute_kw(db, uid, password, 'res.partner', 'search_read', [[]],
+                                         {'fields': ['name', 'is_company', 'company_name', 'country_id', 'state_id',
+                                                     'zip', 'street', 'street2', 'phone', 'mobile', 'email', 'vat']})
 
             # Xóa dữ liệu cũ trong bảng nếu có
             for row in table.get_children():
                 table.delete(row)
 
             # Hiển thị dữ liệu sản phẩm trong bảng
-            for product in products:
-                category_name = product['categ_id'][1] if product['categ_id'] else 'No Category'
-                table.insert('', 'end', values=(product['name'], product['sale_ok'], product['purchase_ok'],
-                                                product['list_price'], product['standard_price'], product['default_code'],
-                                                product['detailed_type'], product['invoice_policy'], category_name))
+            for partner in partner:
+                # category_name = product['categ_id'][1] if product['categ_id'] else 'No Category'
+                table.insert('', 'end', values=(partner['name'], partner['is_company'], partner['company_name'],
+                                                partner['country_id'], partner['state_id'], partner['zip'],
+                                                partner['street'], partner['street2'], partner['phone'],
+                                                partner['mobile'], partner['email'], partner['vat']))
 
             messagebox.showinfo("Thành công", "Dữ liệu sản phẩm đã được tải lên thành công.")
         else:
@@ -57,8 +58,8 @@ def export_products():
                 writer = csv.writer(file)
 
                 # Ghi tiêu đề cột
-                writer.writerow(['Tên SP', 'Có thể bán', 'Có thể mua', 'Giá bán', 'Chi phí',
-                                 'Mã nội bộ', 'Loại sản phẩm', 'Chính sách xuất HĐ', 'Danh mục SP'])
+                writer.writerow(['Tên', 'Là công ty', 'Tên công ty', 'Quốc gia', 'Tỉnh thành',
+                                 'Mã bưu chính', 'Đường', 'Đường 2', 'Điện thoại', 'Di động', 'email', 'vat'])
 
                 # Ghi dữ liệu sản phẩm từ bảng
                 for row_id in table.get_children():
@@ -71,10 +72,10 @@ def export_products():
     except Exception as e:
         messagebox.showerror("Lỗi", str(e))
 
-
 # Tạo cửa sổ chính
 root = tk.Tk()
 root.title("Odoo Product Exporter")
+root.geometry("800x400")
 
 # URL Odoo
 tk.Label(root, text="Odoo URL:").grid(row=0, column=0, padx=10, pady=5, sticky=tk.W)
@@ -96,23 +97,51 @@ tk.Label(root, text="Password:").grid(row=3, column=0, padx=10, pady=5, sticky=t
 password_entry = tk.Entry(root, show="*", width=50)
 password_entry.grid(row=3, column=1, padx=10, pady=5, sticky=tk.W)
 
-# Bảng hiển thị dữ liệu sản phẩm
-columns = ['Tên SP', 'Có thể bán', 'Có thể mua', 'Giá bán', 'Chi phí', 'Mã nội bộ', 'Loại sản phẩm', 'Chính sách xuất HĐ', 'Danh mục SP']
-table = ttk.Treeview(root, columns=columns, show='headings', height=10)
+# Tạo khung để chứa bảng và thanh cuộn
+frame = tk.Frame(root)
+frame.grid(row=4, column=0, columnspan=2, padx=10, pady=10, sticky='nsew')
 
+# Tạo thanh cuộn dọc
+scrollbar_y = ttk.Scrollbar(frame, orient='vertical')
+scrollbar_y.pack(side='right', fill='y')
+
+# Tạo thanh cuộn ngang
+scrollbar_x = ttk.Scrollbar(frame, orient='horizontal')
+scrollbar_x.pack(side='bottom', fill='x')
+
+# Tạo bảng hiển thị dữ liệu sản phẩm
+columns = ['Tên', 'Là công ty', 'Tên công ty', 'Quốc gia', 'Tỉnh thành',
+           'Mã bưu chính', 'Đường', 'Đường 2', 'Điện thoại', 'Di động', 'email', 'vat']
+table = ttk.Treeview(frame, columns=columns, show='headings', height=10,
+                     yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+
+# Thiết lập cột và tiêu đề cột
 for col in columns:
     table.heading(col, text=col)
     table.column(col, width=120)
 
-table.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+table.pack(side='left', fill='both', expand=True)
 
-# Nút để tải dữ liệu sản phẩm
-load_button = tk.Button(root, text="Load Products", command=load_products)
-load_button.grid(row=5, column=0, columnspan=1, pady=10)
+# Liên kết thanh cuộn với bảng
+scrollbar_y.config(command=table.yview)
+scrollbar_x.config(command=table.xview)
+
+# Tạo một khung mới để chứa các nút bấm và định vị nó bên phải
+button_frame = tk.Frame(root)
+button_frame.grid(row=5, column=0, columnspan=2, padx=10, pady=10, sticky='e')
+
+# Nút để tải dữ liệu
+load_button = tk.Button(button_frame, text="Load Data")
+load_button.pack(side='right', padx=5)
 
 # Nút để xuất dữ liệu ra CSV
-export_button = tk.Button(root, text="Export to CSV", command=export_products)
-export_button.grid(row=5, column=1, columnspan=1, pady=10, padx=10)
+export_button = tk.Button(button_frame, text="Export to CSV")
+export_button.pack(side='right')
+
+# Đặt tỷ lệ cho cột và hàng để thanh cuộn hoạt động tốt hơn
+root.grid_rowconfigure(4, weight=1)
+root.grid_columnconfigure(1, weight=1)
 
 # Chạy vòng lặp chính của GUI
 root.mainloop()
+
